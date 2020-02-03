@@ -20,16 +20,20 @@
 
 // #pragma config statements should precede project file includes.
 // Use project enums instead of #define for ON and OFF.
-
+void __interrupt() ISR();
 #include <xc.h>
+#include "7SEGHEX.h"
+
+int Btnmas=0;
+int Btnmenos=0;
 
 void main(void) {
-    int Btnmas=0;
-    int Btnmenos=0;
+    
     int contbtn1=0;
     int contbtn2=0;
-    int contA=0;
-    
+    int display=0;
+    int ndisplay1=0;
+    int ndisplay2=0;
     //Config TMR0 
     TMR0=0;//Limpia el timer
     INTCON.T0IE=1; // Habilita los bits del Timer 0
@@ -75,15 +79,8 @@ void main(void) {
     INTCON.GIE=1; //Habilita las interrupciones
     
     
-    //PORTB INTERRUPT ON CHANGE ENABLE
-    
-    INTCONbits.GIE=1;
-    INTCONbits.RBIE=1;
-    INTCONbits.INTE=1;
-    INTCONbits.INTF=0;
-    INTCONbits.RBIF=0;
-    
-    //PORTB(0;2 Buttons, 3:5 RGY, 6:7 winners LEDS INICIALIZATION  )
+
+   
     
 /* 
 int val1=0b00000000;
@@ -126,27 +123,47 @@ PORTB.RB1 = 0; //(Desactivar para poder colocar el siguiente valor)
         }
     }
 
+    if (T0IF.INTCON==1){
+        if (display==1)
+        { display=0;
+        }
+        if (display==0)
+        { display=1;
+        }
+    }
+    
+    if (display==1){
+        PORTBbits.RB3=0;
+        PORTBbits.RB4=1;
+        PORTC=tabla7seg(ndisplay1);
+    }
+    if (display==0){
+        PORTBbits.RB3=1;
+        PORTBbits.RB4=0;
+        PORTC=tabla7seg(ndisplay2);
+    }
+    
+    
+    }
+    
    return;
 } 
-}
 
   void __interrupt() ISR(){
       
-      while(1)
-      {
           if (INTCON.RBIF==1)
           {
               if (PORTBbits.RB0==1)
-              { BtnMas==1;
+              { Btnmas=1;
               PORTEbits.RE0=1;
               }
               if (PORTBbits.RB1==1)
-              { BtnMenos==1;
+              { Btnmenos=1;
               PORTEbits.RE1=1;
               }
               
               }
           }
-      }
+      
        
   
