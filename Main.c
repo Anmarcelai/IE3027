@@ -1,3 +1,6 @@
+
+  
+
 // PIC16F887 Configuration Bit Settings
 
 // 'C' source line config statements
@@ -22,51 +25,52 @@
 // Use project enums instead of #define for ON and OFF.
 void __interrupt() ISR();
 #include <xc.h>
-#include "7SEGHEX.h"
+#include "SEGHEX.h"
+
+#define _XTAL_FREQ 4000000
 
 int Btnmas=0;
 int Btnmenos=0;
 int ndisplay1=0;
 int ndisplay2=0;
 int ndisplaycompleto=0;
+int contbtn1=0;
+int contbtn2=0;
+int display=0;
 
-void main(void) {
-    
-    int contbtn1=0;
-    int contbtn2=0;
-    int display=0;
+void main(void) {    
     
     //Config TMR0 
     TMR0=0;//Limpia el timer
-    INTCON.T0IE=1; // Habilita los bits del Timer 0
-    INTCON.T0IF=0;// Limpiar la bandera 
-    OPTION_REG.T0CS=0; //Se Trabaja con el reloj interno
-    OPTION_REG.PSA=0; // Establecer el prescaler al TMR0
-    OPTION_REG.PS2=0;
-    OPTION_REG.PS1=1;
-    OPTION_REG.PS0=1; //1:16
+    INTCONbits.T0IE=1; // Habilita los bits del Timer 0
+    INTCONbits.T0IF=0;// Limpiar la bandera 
+    OPTION_REGbits.T0CS=0; //Se Trabaja con el reloj interno
+    OPTION_REGbits.PSA=0; // Establecer el prescaler al TMR0
+    OPTION_REGbits.PS2=0;
+    OPTION_REGbits.PS1=1;
+    OPTION_REGbits.PS0=1; //1:16
     
-    INTCON.INTE=1; // Habilitar ints externos (Botones puerto b)
-    INTCON.RBIE=1; // Habilitar botones (ints)
-    INTCON.INTF=0; // Limpia bandera externa
-    INTCON.RBIF=0; // Limpia bandera del puerto B 
-    OPTION_REG.7=0; //Desabilita los pullups en el puerto B 
-    OPTION_REG.INTEDG=1; // External interrupts will happen on rising age
+    INTCONbits.INTE=1; // Habilitar ints externos (Botones puerto b)
+    INTCONbits.RBIE=1; // Habilitar botones (ints)
+    INTCONbits.INTF=0; // Limpia bandera externa
+    INTCONbits.RBIF=0; // Limpia bandera del puerto B 
+    OPTION_REGbits.nRBPU=0; //Desabilita los pullups en el puerto B 
+    OPTION_REGbits.INTEDG=1; // External interrupts will happen on rising age
     IOCB= 0b00000011; // RB0 y RB1 con interrupciones
     
     //ADC
-    INTCON.PEIE=1 //
-    PIR1.ADIF=0; // Clear Bandera ADC
-    ADCON0.ADC1=0;//
-    ADCON0.ADCS0=1;// Fosc/8
-    ADCON0.CHS3=0;
-    ADCON0.CHS2=0;
-    ADCON0.CHS0=0;// Canal analógico AN0
-    ADCON0.1=0;// Interrupciones 
-    ADCON0.ADON=1; // Habilita ADC
-    ADCON1.ADFM=1; // Pines significativos en ADRESH
-    ADCON1.VCFG1=0; // Referencia a Tierra
-    ANSEL.0=1; // RA0 como pin analógico
+    INTCONbits.PEIE=1; //
+    PIR1bits.ADIF=0; // Clear Bandera ADC
+    ADCON0bits.ADCS1=0;//
+    ADCON0bits.ADCS0=1;// Fosc/8
+    ADCON0bits.CHS3=0;
+    ADCON0bits.CHS2=0;
+    ADCON0bits.CHS0=0;// Canal analógico AN0
+    ADCON0bits.GO_nDONE=0;// Interrupciones 
+    ADCON0bits.ADON=1; // Habilita ADC
+    ADCON1bits.ADFM=1; // Pines significativos en ADRESH
+    ADCON1bits.VCFG1=0; // Referencia a Tierra
+    ANSELbits.ANS0=1; // RA0 como pin analógico
     
     //PUERTOS
     PORTA=0; // Limpia el Puerto A
@@ -78,7 +82,7 @@ void main(void) {
     TRISC=0; // Output
     TRISD=0; //Output
     TRISE=0;
-    INTCON.GIE=1; //Habilita las interrupciones
+    INTCONbits.GIE=1; //Habilita las interrupciones
     
     while (1)
     {
@@ -93,7 +97,7 @@ void main(void) {
         }
         else {
             if (contbtn1>100 && Btnmas==1){
-                PORTA++;
+                PORTD++;
                 
             }
         }
@@ -107,17 +111,8 @@ void main(void) {
         else {
             if (contbtn2>100 && Btnmenos==1){
                 //codigo de decremento
-                PORTA--;
+                PORTD--;
             }
-        }
-    }
-
-    if (T0IF.INTCON==1){
-        if (display==1)
-        { display=0;
-        }
-        if (display==0)
-        { display=1;
         }
     }
     
@@ -132,7 +127,7 @@ void main(void) {
         PORTC=tabla7seg(ndisplay2);
     }
     
-      if (ndisplaycompleto==PORTA){
+      if (ndisplaycompleto==PORTD){
           PORTBbits.RB2=1;//Activa LED
           PORTEbits.RE0=1; //Activa Buzzer
                                    }
@@ -141,31 +136,37 @@ void main(void) {
     }
      
 
-  void __interrupt() ISR(){
-      
-          if (INTCON.RBIF==1)
-          {
-              if (PORTBbits.RB0==1)
-              { Btnmas=1;
-              PORTBbits.RB0=1;
-              }
-              if (PORTBbits.RB1==1)
-              { Btnmenos=1;
-              PORTBbits.RB1=1;
-              }
-              
-              }
-          
-          if ( PIR1bits.ADIF==1){
-           ADCON0bits.ADON=0; //Desactivamos el ADC
-           ndisplay1=ADRESH*0b00001111; //Primeros 4 bits
-           ndisplay2=(ADRESH*0b11110000)>> 4; // Bits restantes y los corre para usar la misma tabla
-           ndisplaycompleto=ADRESH; 
-           PIR1bits.ADIF=0;
-          }
-          }
+void __interrupt() ISR(){
+    if (INTCONbits.RBIF==1)
+    {
+        if (PORTBbits.RB0==1)
+        { Btnmas=1;
+        PORTBbits.RB0=1;
+        PORTBbits.RB2 = 1;
+        }
+        if (PORTBbits.RB1==1)
+        { Btnmenos=1;
+        PORTBbits.RB1=1;
+        }
+    }
+    if (INTCONbits.T0IF==1){
+        if (display==1)
+        { display=0;
+        }
+        if (display==0)
+        { display=1;
+        }
+    }
+
+    if ( PIR1bits.ADIF==1){
+        ADCON0bits.ADON=0; //Desactivamos el ADC
+        ndisplay1=ADRESH*0b00001111; //Primeros 4 bits
+        ndisplay2=(ADRESH*0b11110000)>> 4; // Bits restantes y los corre para usar la misma tabla
+        ndisplaycompleto=ADRESH; 
+        PIR1bits.ADIF=0;
+    }
+}
              
  
       
        
-  
