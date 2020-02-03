@@ -26,14 +26,16 @@ void __interrupt() ISR();
 
 int Btnmas=0;
 int Btnmenos=0;
+int ndisplay1=0;
+int ndisplay2=0;
+int ndisplaycompleto=0;
 
 void main(void) {
     
     int contbtn1=0;
     int contbtn2=0;
     int display=0;
-    int ndisplay1=0;
-    int ndisplay2=0;
+    
     //Config TMR0 
     TMR0=0;//Limpia el timer
     INTCON.T0IE=1; // Habilita los bits del Timer 0
@@ -75,29 +77,16 @@ void main(void) {
     TRISB= 0b00000011; // RB0 y RB1 inputs, los demás outputs
     TRISC=0; // Output
     TRISD=0; //Output
-    
+    TRISE=0;
     INTCON.GIE=1; //Habilita las interrupciones
-    
-    
-
-   
-    
-/* 
-int val1=0b00000000;
-int val2=0b00000000;
-
-PORTA = val1;
-PORTB.RB0 = 1; // (Activar el transistor del primer 7seg
-__delay_ms(5);; //(Delay recomendado de 5ms entre cambios)
-PORTB.RB0 = 0;// Desactivo el transistor 
-PORTA = val2; //(Valor del otro 7 seg)
-PORTB.RB1 = 1; //(segundo transistor del segundo 7 seg)
-PORTB.RB1 = 0; //(Desactivar para poder colocar el siguiente valor)
- 
-  */   
     
     while (1)
     {
+      ADCON0bits.ADON=1;
+      __delay_ms(1);
+      ADCON0bits.GO=1;
+      
+        
     if (Btnmas==1){
         if (contbtn1<=100){
             contbtn1++;
@@ -143,11 +132,14 @@ PORTB.RB1 = 0; //(Desactivar para poder colocar el siguiente valor)
         PORTC=tabla7seg(ndisplay2);
     }
     
-    
+      if (ndisplaycompleto==PORTA){
+          PORTBbits.RB2=1;//Activa LED
+          PORTEbits.RE0=1; //Activa Buzzer
+                                   }
+                                   }
+      
     }
-    
-   return;
-} 
+     
 
   void __interrupt() ISR(){
       
@@ -155,15 +147,25 @@ PORTB.RB1 = 0; //(Desactivar para poder colocar el siguiente valor)
           {
               if (PORTBbits.RB0==1)
               { Btnmas=1;
-              PORTEbits.RE0=1;
+              PORTBbits.RB0=1;
               }
               if (PORTBbits.RB1==1)
               { Btnmenos=1;
-              PORTEbits.RE1=1;
+              PORTBbits.RB1=1;
               }
               
               }
+          
+          if ( PIR1bits.ADIF==1){
+           ADCON0bits.ADON=0; //Desactivamos el ADC
+           ndisplay1=ADRESH*0b00001111; //Primeros 4 bits
+           ndisplay2=(ADRESH*0b11110000)>> 4; // Bits restantes y los corre para usar la misma tabla
+           ndisplaycompleto=ADRESH; 
+           PIR1bits.ADIF=0;
           }
+          }
+             
+ 
       
        
   
